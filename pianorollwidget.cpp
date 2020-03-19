@@ -52,7 +52,7 @@ void PianoRollScroll::paintEvent(QPaintEvent *)
         PianoRollViewport pr_viewport;
         pr_viewport.width = size.width();
         pr_viewport.height = size.height();
-        pr_viewport.maxWidth = pr_viewport.width * 2; // TODO
+        pr_viewport.maxWidth = 10000; // TODO
         pr_viewport.left_upper_x = horizontalScrollBar()->value();
         pr_viewport.left_upper_y = verticalScrollBar()->value();
 
@@ -71,7 +71,7 @@ PianoRollWidget::PianoRollWidget(QWidget *parent, PianoRollConfig config)
 
 void PianoRollWidget::paintAll(QPainter& painter, const PianoRollViewport& viewport)
 {
-    qDebug("piano roll window maxWidth: %f", viewport.maxWidth);
+    qDebug("piano roll window width: %f, maxWidth: %f", viewport.width, viewport.maxWidth);
 
     painter.translate(QPointF{0, -viewport.left_upper_y});
     paintKeyboard(painter, viewport);

@@ -215,8 +215,8 @@ MidiWorkspace::create_time_signature_info(unsigned int track) const
         if (event.isMeta() && event.isTimeSignature()) {
             TimeSignatureChange change;
             TimeSignature ts;
-            ts.numerator = static_cast<uint8_t>(event.getP2());
-            ts.denominator = static_cast<uint8_t>(event.getP3());
+            ts.denominator = static_cast<uint8_t>(event.getP2());
+            ts.numerator = static_cast<uint8_t>(event.getP3());
             change.time_signature = ts;
             change.abs_tick = static_cast<uint64_t>(event.tick);
             changes.push_back(std::move(change));

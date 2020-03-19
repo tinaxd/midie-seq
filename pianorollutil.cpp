@@ -27,8 +27,8 @@ build_drawing_graph(const smf::MidiEventList& track)
         const auto& event = track.getEvent(i);
         if (event.isNote()) {
             const auto abs_tick = event.tick;
-            const auto note = static_cast<uint8_t>(event.getP0());
-            const auto velocity = event.getP1();
+            const auto note = static_cast<uint8_t>(event.getP1());
+            const auto velocity = event.getP2();
             if (event.isNoteOn()) {
                 if (velocity == 0) {
                     // note_on with velocity 0 are treated as note_off

@@ -8,10 +8,12 @@
 #include <QScrollArea>
 #include <MidiEventList.h>
 #include <memory>
+#include <array>
+
 
 namespace midie {
 
-using PianoRollPoint = int;
+using PianoRollPoint = double;
 const int WHITE_KEYS = 69;
 
 class MidiWorkspace;
@@ -80,10 +82,10 @@ public:
     PianoRollWidget(QWidget *parent = nullptr, PianoRollConfig config = PianoRollConfig());
 
 private:
-    unsigned int m_currentTrack;
+    unsigned int m_currentTrack = 0;
     PianoRollConfig m_config;
 //    PianoRollViewport m_viewport;
-    std::vector<PianoRollPoint> m_noteHeightCache{128, 0};
+    std::array<PianoRollPoint, 128> m_noteHeightCache;
 
     std::shared_ptr<MidiWorkspace> m_ws;
 

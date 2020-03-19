@@ -2,6 +2,7 @@
 
 #include <MidiEvent.h>
 #include <cmath>
+#include <boost/format.hpp>
 
 
 namespace midie
@@ -214,8 +215,8 @@ MidiWorkspace::create_time_signature_info(unsigned int track) const
         if (event.isMeta() && event.isTimeSignature()) {
             TimeSignatureChange change;
             TimeSignature ts;
-            ts.numerator = static_cast<uint8_t>(event.getP0());
-            ts.denominator = static_cast<uint8_t>(std::pow(2, event.getP1()));
+            ts.numerator = static_cast<uint8_t>(event.getP2());
+            ts.denominator = static_cast<uint8_t>(event.getP3());
             change.time_signature = ts;
             change.abs_tick = static_cast<uint64_t>(event.tick);
             changes.push_back(std::move(change));
@@ -223,6 +224,16 @@ MidiWorkspace::create_time_signature_info(unsigned int track) const
     }
 
     return TimeSignatureInfo(changes, false);
+}
+
+std::vector<std::tuple<uint8_t, std::string>>
+MidiWorkspace::track_info() const
+{
+    std::vector<std::tuple<uint8_t, std::string>> tracks;
+    for (auto i=0; i<m_midi->getTrackCount(); i++) {
+        tracks.push_back(std::make_tuple(i, (boost::format("Track %1%") % i).str()));
+    }
+    return tracks;
 }
 
 }

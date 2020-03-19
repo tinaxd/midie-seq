@@ -66,17 +66,17 @@ PianoRollWidget::PianoRollWidget(QWidget *parent, PianoRollConfig config)
       m_ws(new MidiWorkspace)
 {
     setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
-    setMinimumSize(10000, m_config.whiteHeight * WHITE_KEYS);
+    setMinimumSize(10000, static_cast<int>(m_config.whiteHeight) * WHITE_KEYS);
 }
 
 void PianoRollWidget::paintAll(QPainter& painter, const PianoRollViewport& viewport)
 {
-    qDebug("piano roll window maxWidth: %d", viewport.maxWidth);
+    qDebug("piano roll window maxWidth: %f", viewport.maxWidth);
 
-    painter.translate(QPoint{0, -viewport.left_upper_y});
+    painter.translate(QPointF{0, -viewport.left_upper_y});
     paintKeyboard(painter, viewport);
 
-    painter.translate(QPoint{-m_config.whiteWidth-viewport.left_upper_x, 0});
+    painter.translate(QPointF{m_config.whiteWidth-viewport.left_upper_x, 0});
     try {
         const auto& track = m_ws->events_abs_tick(m_currentTrack);
         NoteDrawingBounds bounds;
@@ -90,8 +90,6 @@ void PianoRollWidget::paintAll(QPainter& painter, const PianoRollViewport& viewp
     }
 
     paintTimeline(painter, viewport);
-
-    // paint Timeline
 }
 
 void PianoRollWidget::paintKeyboard(QPainter& painter, const PianoRollViewport& viewport)
@@ -110,12 +108,12 @@ void PianoRollWidget::paintKeyboard(QPainter& painter, const PianoRollViewport& 
 
         painter.setPen(keyboardBlackPen);
         painter.setBrush(keyboardWhiteBrush);
-        painter.drawRect(QRect{0, height, m_config.whiteWidth, m_config.whiteHeight});
+        painter.drawRect(QRectF{0, height, m_config.whiteWidth, m_config.whiteHeight});
 
         if (is_c) {
             const auto index = (i - 4) / 7;
             auto string = QString("C%1").arg(9 - index);
-            painter.drawText(QPoint{m_config.whiteWidth / 4 + 25, i * m_config.whiteHeight + 25}, string);
+            painter.drawText(QPointF{m_config.whiteWidth / 4 + 25, i * m_config.whiteHeight + 25}, string);
 
             const auto curr_c = height + m_config.whiteHeight;
             int n_keys;
@@ -129,7 +127,7 @@ void PianoRollWidget::paintKeyboard(QPainter& painter, const PianoRollViewport& 
             painter.setPen(QColor{200, 200, 200});
             for (auto i=1; i<=n_keys; i++) {
                 const auto y = last_c + h_line_interval * i;
-                // cache[processing_note] = y;
+                m_noteHeightCache.at(static_cast<size_t>(processing_note)) = y;
                 if (i == n_keys) {
                     painter.setPen(QColor{50, 50, 50});
                 }
@@ -142,7 +140,7 @@ void PianoRollWidget::paintKeyboard(QPainter& painter, const PianoRollViewport& 
     }
 
     painter.setBrush(keyboardBlackBrush);
-    painter.drawRect(QRect{0, 0, m_config.blackWidth, m_config.blackHeight/2});
+    painter.drawRect(QRectF{0, 0, m_config.blackWidth, m_config.blackHeight/2});
 
     auto black_index = 2;
     for (auto i=0; i<WHITE_KEYS; i++) {
@@ -153,7 +151,7 @@ void PianoRollWidget::paintKeyboard(QPainter& painter, const PianoRollViewport& 
             black_index = 0;
         } else {
             const auto left_up_y = m_config.whiteHeight * (i + 1) - m_config.blackHeight / 2;
-            painter.drawRect(QRect{0, left_up_y, m_config.blackWidth, m_config.blackHeight});
+            painter.drawRect(QRectF{0, left_up_y, m_config.blackWidth, m_config.blackHeight});
             black_index++;
         }
     }
@@ -184,7 +182,7 @@ PianoRollWidget::paintNotes(QPainter& painter, const smf::MidiEventList& track, 
         if (note_height < bounds.upper || note_height > bounds.lower) {
             continue;
         }
-        painter.drawRect(QRect{start_cord, note_height, end_cord - start_cord, m_config.noteHeight});
+        painter.drawRect(QRectF{start_cord, note_height, end_cord - start_cord, m_config.noteHeight});
         _note_drawn++;
     }
     qDebug("Redrew %d notes", _note_drawn);

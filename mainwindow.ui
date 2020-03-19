@@ -39,7 +39,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QComboBox" name="comboBox"/>
+     <widget class="midie::TrackChooser" name="trackComboBox"/>
     </item>
    </layout>
   </widget>
@@ -102,6 +102,11 @@
    <extends>QScrollArea</extends>
    <header>pianorollwidget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>midie::TrackChooser</class>
+   <extends>QComboBox</extends>
+   <header>trackchooser.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

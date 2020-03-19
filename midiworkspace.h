@@ -91,7 +91,7 @@ public:
     TempoInfo create_tempo_info(unsigned int track) const;
     TimeSignatureInfo create_time_signature_info(unsigned int track) const;
 
-    std::vector<std::string> track_info() const;
+    std::vector<std::tuple<uint8_t, std::string>> track_info() const;
 
     int resolution() const { return m_midi->getTicksPerQuarterNote(); }
 

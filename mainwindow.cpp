@@ -3,6 +3,7 @@
 
 #include "pianorollwidget.h"
 #include "midiworkspace.h"
+#include "trackchooser.h"
 #include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -13,7 +14,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionNewSmf, &QAction::triggered, this, &MainWindow::newSmf);
     connect(ui->actionOpenSmf, &QAction::triggered, this, &MainWindow::loadSmf);
 
-    connect(this, &MainWindow::notifyNewSmf, ui->scrollAreaWidgetContents,&midie::PianoRollWidget::replaceWorkspace);
+    connect(this, &MainWindow::notifyNewSmf, ui->scrollAreaWidgetContents, &midie::PianoRollWidget::replaceWorkspace);
+    connect(this, &MainWindow::notifyNewSmf, ui->trackComboBox, &midie::TrackChooser::replaceWorkspace);
+
+    connect(ui->trackComboBox, &midie::TrackChooser::trackChange, ui->scrollAreaWidgetContents, &midie::PianoRollWidget::changeCurrentTrack);
 }
 
 MainWindow::~MainWindow()

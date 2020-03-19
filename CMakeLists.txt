@@ -28,8 +28,10 @@ add_executable(midie
   pianorollutil.h
   midiworkspace.cpp
   midiworkspace.h
-  midiutil.h
   midiutil.cpp
+  midiutil.h
+  trackchooser.cpp
+  trackchooser.h
 )
 
 add_dependencies(midie midifile)

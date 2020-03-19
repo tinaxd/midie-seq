@@ -2,7 +2,7 @@
 #define PIANOROLLUTIL_H
 
 #include <cstdint>
-#include <MidiEvent.h>
+#include <MidiEventList.h>
 
 namespace midie
 {
@@ -19,7 +19,7 @@ struct IndependentNoteDrawingInfo
     uint8_t velocity;
 };
 
-std::vector<IndependentNoteDrawingInfo> build_drawing_graph(const smf::MidiEvent& track);
+std::vector<IndependentNoteDrawingInfo> build_drawing_graph(const smf::MidiEventList& track);
 
 }
 

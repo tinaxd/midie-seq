@@ -45,6 +45,8 @@ public:
     void deleteChange(TimeSignatureChange deleted);
     std::optional<TimeSignature> time_signature(uint64_t abs_tick) const;
 
+    bool empty() const { return m_changes.empty(); }
+
 private:
     std::vector<TimeSignatureChange> m_changes;
 };
@@ -66,6 +68,8 @@ public:
     void append(TempoChange change);
     void deleteChange(TempoChange deleted);
     std::optional<uint16_t> tempo(uint64_t abs_tick) const;
+
+    bool empty() const { return m_changes.empty(); }
 
 private:
     std::vector<TempoChange> m_changes;
@@ -89,7 +93,7 @@ public:
 
     std::vector<std::string> track_info() const;
 
-    int resolution() const;
+    int resolution() const { return m_midi->getTicksPerQuarterNote(); }
 
 private:
     std::unique_ptr<smf::MidiFile> m_midi;

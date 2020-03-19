@@ -6,16 +6,21 @@
 #include <QBrush>
 #include <QColor>
 #include <QScrollArea>
+#include <MidiEventList.h>
+#include <memory>
 
 namespace midie {
 
 using PianoRollPoint = int;
 const int WHITE_KEYS = 69;
 
+class MidiWorkspace;
+
 struct PianoRollConfig;
 struct PianoRollViewport;
 class PianoRollScroll;
 class PianoRollWidget;
+
 
 struct PianoRollConfig
 {
@@ -30,6 +35,7 @@ struct PianoRollConfig
     PianoRollPoint beatWidth;
 };
 
+
 struct PianoRollViewport
 {
     PianoRollPoint maxWidth;
@@ -38,6 +44,13 @@ struct PianoRollViewport
     PianoRollPoint left_upper_x;
     PianoRollPoint left_upper_y;
 };
+
+
+struct NoteDrawingBounds
+{
+    PianoRollPoint left, right, upper, lower;
+};
+
 
 class PianoRollScroll : public QScrollArea
 {
@@ -58,6 +71,7 @@ protected:
 
 };
 
+
 class PianoRollWidget : public QWidget
 {
     Q_OBJECT
@@ -66,13 +80,20 @@ public:
     PianoRollWidget(QWidget *parent = nullptr, PianoRollConfig config = PianoRollConfig());
 
 private:
-    int m_currentTrack;
+    unsigned int m_currentTrack;
     PianoRollConfig m_config;
 //    PianoRollViewport m_viewport;
+    std::vector<PianoRollPoint> m_noteHeightCache{128, 0};
+
+    std::shared_ptr<MidiWorkspace> m_ws;
 
     void paintAll(QPainter& painter, const PianoRollViewport& viewport);
     void paintKeyboard(QPainter& painter, const PianoRollViewport& viewport);
-    void paintNotes(QPainter& painter);
+    void paintNotes(QPainter& painter, const smf::MidiEventList& track, const NoteDrawingBounds& bounds);
+    void paintTimeline(QPainter& painter, const PianoRollViewport& viewport);
+
+    PianoRollPoint calculateNoteVCord(uint8_t note) const;
+    PianoRollPoint calculateNoteHCord(uint64_t abs_tick) const;
 
 //    void onResize(QResizeEvent *event);
 
@@ -81,6 +102,8 @@ private:
 signals:
 
 public slots:
+    void replaceWorkspace(std::shared_ptr<MidiWorkspace> new_ws);
+    void changeCurrentTrack(unsigned int track);
 
 };
 

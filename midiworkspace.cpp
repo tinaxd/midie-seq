@@ -155,9 +155,8 @@ MidiWorkspace::MidiWorkspace(const std::string& path)
 }
 
 MidiWorkspace::MidiWorkspace(const QString& path)
-{
-    MidiWorkspace(path.toStdString());
-}
+    : MidiWorkspace(path.toStdString())
+{}
 
 unsigned int
 MidiWorkspace::track_count() const
@@ -168,12 +167,16 @@ MidiWorkspace::track_count() const
 const smf::MidiEventList&
 MidiWorkspace::events_abs_tick(unsigned int track) const
 {
+    if (track >= static_cast<unsigned int>(m_midi->getTrackCount()))
+        throw std::out_of_range("track index out of range");
     return (*m_midi)[static_cast<int>(track)];
 }
 
 smf::MidiEventList&
 MidiWorkspace::events_abs_tick_mut(unsigned int track) const
 {
+    if (track >= static_cast<unsigned int>(m_midi->getTrackCount()))
+        throw std::out_of_range("track index out of range");
     return (*m_midi)[static_cast<int>(track)];
 }
 

@@ -59,6 +59,11 @@ class MidiEventList {
 		// access to the list of MidiEvents for sorting with an external function:
 		MidiEvent**      data               (void);
 
+        // event list manipulation.
+        // from https://github.com/craigsapp/midifile/pull/52.
+        int              remove             (int index);
+        int              insert             (int index, MidiEvent& event);
+
 	protected:
 		std::vector<MidiEvent*> list;
 

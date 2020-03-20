@@ -74,6 +74,41 @@ MidiEventList::~MidiEventList() {
 
 //////////////////////////////
 //
+// MidiEventList::remove -- deletes a MidiEvent at the specified index. If
+//      the index is invalid then the request is ignored and -1 is returned.
+//      If the index is valid then the new size of the list is returned.
+//
+int MidiEventList::remove(int index) {
+   if ( ( index >=0 ) && ( index < (int)list.size() ) ) {
+     delete list[ index ];
+     list.erase(list.begin() + index);
+     return (int)list.size()-1;
+   } else {
+     return -1;
+   }
+}
+
+
+//////////////////////////////
+//
+// MidiEventList::insert -- inserts a MidiEvent at the specified index. If
+//      the index is invalid then the request is ignored and -1 is returned.
+//      If the index is valid then the new size of the list is returned.
+//
+int MidiEventList::insert(int index, MidiEvent& event) {
+  if ( ( index >=0 ) && ( index < (int)list.size() ) ) {
+   MidiEvent* ptr = new MidiEvent(event);
+   list.insert(list.begin()+index, ptr);
+   return (int)list.size()-1;
+ } else {
+   return -1;
+ }
+}
+
+
+
+//////////////////////////////
+//
 // MidiEventList::operator[] --
 //
 

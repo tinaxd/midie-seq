@@ -250,9 +250,152 @@ PianoRollWidget::calculateNoteVCord(uint8_t note) const
 PianoRollPoint
 PianoRollWidget::calculateNoteHCord(uint64_t abs_tick) const
 {
-    const auto beat_width = static_cast<unsigned long>(m_config.beatWidth);
-    const auto beat_tick = static_cast<unsigned long>(m_ws->resolution());
-    return static_cast<PianoRollPoint>(beat_width * (abs_tick / beat_tick));
+    const auto beat_width = m_config.beatWidth;
+    const auto beat_tick = m_ws->resolution();
+    return static_cast<PianoRollPoint>(beat_width * (static_cast<double>(abs_tick) / beat_tick));
+}
+
+void
+PianoRollWidget::mousePressEvent(QMouseEvent *event)
+{
+    const auto& pos = event->pos();
+    const auto& button = event->button();
+
+    switch (button)
+    {
+    case Qt::MouseButton::LeftButton:
+    {
+        m_editingState.click_state = EditingState::Clicked{
+                static_cast<double>(pos.x()), static_cast<double>(pos.y())};
+        // preview sound here
+        break;
+    }
+    case Qt::MouseButton::RightButton:
+    {
+        m_editingState.click_state = EditingState::SubClicked{
+                static_cast<double>(pos.x()), static_cast<double>(pos.y())};
+        break;
+    }
+    default: {}
+    }
+}
+
+void
+PianoRollWidget::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (std::holds_alternative<EditingState::Clicked>(m_editingState.click_state))
+    {
+        const auto& clicked_pos = std::get<EditingState::Clicked>(m_editingState.click_state);
+        const auto& release_pos = event->pos();
+        const auto& clicked_pos_parsed = parseClickPosition(std::make_tuple(clicked_pos.x, clicked_pos.y));
+        const auto& release_pos_parsed = parseClickPosition(std::make_tuple(release_pos.x(), release_pos.y()));
+        if (clicked_pos_parsed && release_pos_parsed)
+        {
+            auto start_tick = std::get<0>(clicked_pos_parsed.value());
+            const auto note = std::get<1>(clicked_pos_parsed.value());
+            auto end_tick = std::get<0>(release_pos_parsed.value());
+            start_tick = quantizeTime(start_tick);
+            end_tick = quantizeTime(end_tick);
+            if (start_tick >= end_tick) {
+                // invalid range
+                return;
+            } else {
+                // add note to m_currentTrack
+                smf::MidiMessage noteon;
+                noteon.makeNoteOn(static_cast<int>(m_currentTrack), note, 100); // TODO: not always m_currentTrack == channel
+                smf::MidiMessage noteoff;
+                noteoff.makeNoteOff(static_cast<int>(m_currentTrack), note, 0); // TODO:
+
+                m_ws->append_event(m_currentTrack, start_tick, noteon);
+                m_ws->append_event(m_currentTrack, end_tick, noteoff);
+
+                // request redraw
+                update();
+            }
+        }
+    } else if (std::holds_alternative<EditingState::SubClicked>(m_editingState.click_state))
+    {
+        const auto& clicked_pos = std::get<EditingState::SubClicked>(m_editingState.click_state);
+        const auto& clicked_pos_parsed = parseClickPosition(std::make_tuple(clicked_pos.x, clicked_pos.y));
+        if (clicked_pos_parsed)
+        {
+            uint64_t tick;
+            uint8_t note;
+            std::tie(tick, note) = clicked_pos_parsed.value();
+            if (deleteNoteTickNote(tick, note)) {
+                // request redraw
+                update();
+                qDebug("deleted tick %ld note %d", tick, note);
+            } else {
+                qDebug("failed to delete note: note not found tick %ld note %d", tick, note);
+            }
+        }
+    }
+}
+
+bool
+PianoRollWidget::deleteNoteTickNote(uint64_t tick, uint8_t note)
+{
+    const auto& track = m_ws->events_abs_tick(m_currentTrack);
+    const auto& note_info = build_drawing_graph(track);
+    auto noteon_deleted = false;
+    auto noteoff_deleted = false;
+    for (const auto& info : note_info)
+    {
+        if (info.note == note && info.start_tick <= tick && tick <= info.end_tick)
+        {
+            noteon_deleted = m_ws->delete_event_if_once(m_currentTrack, info.start_tick, [note](auto& m) {
+               if (m.isNoteOn()) {
+                   return m.getKeyNumber() == static_cast<int>(note);
+               }
+               return false;
+            });
+            noteoff_deleted = m_ws->delete_event_if_once(m_currentTrack, info.end_tick, [note](auto& m) {
+                if (m.isNoteOff()) {
+                    return m.getKeyNumber() == static_cast<int>(note);
+                }
+                return false;
+            });
+            break;
+        }
+    }
+    return noteon_deleted && noteoff_deleted;
+}
+
+uint64_t
+PianoRollWidget::quantizeTime(uint64_t absTick)
+{
+    const auto diff = absTick % m_editingState.quantize_unit;
+    if (diff > (m_editingState.quantize_unit / 2)) {
+        return absTick + m_editingState.quantize_unit - diff;
+    } else {
+        return absTick - diff;
+    }
+}
+
+std::optional<std::tuple<uint64_t, uint8_t>>
+PianoRollWidget::parseClickPosition(const std::tuple<PianoRollPoint, PianoRollPoint>& pos) const
+{
+    if (std::get<0>(pos) < m_config.whiteWidth) {
+        return std::optional<std::tuple<uint64_t, uint8_t>>();
+    }
+
+    std::optional<PianoRollPoint> note;
+    for (auto i=12; i<128; i++)
+    {
+        const auto v = m_noteHeightCache.at(static_cast<size_t>(i));
+        if (std::get<1>(pos) > v) {
+            note = std::make_optional(i - 1);
+            break;
+        }
+    }
+    if (note)
+    {
+        const auto abs_x = std::get<0>(pos) - m_config.whiteWidth;
+        const auto abs_tick = static_cast<uint64_t>((abs_x * m_ws->resolution()) / m_config.beatWidth);
+        return std::optional(std::tuple(abs_tick, note.value()));
+    }
+    return std::optional<std::tuple<PianoRollPoint, PianoRollPoint>>();
 }
 
 void

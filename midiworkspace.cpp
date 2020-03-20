@@ -122,8 +122,7 @@ TempoInfo::tempo(uint64_t abs_tick) const
 MidiWorkspace::MidiWorkspace()
 {
     auto mf = new smf::MidiFile;
-    const auto first_track_idx = mf->addTrack();
-    auto& first_track = (*mf)[first_track_idx];
+    auto& first_track = (*mf)[0];
 
     smf::MidiMessage time_signature;
     time_signature.makeTimeSignature(4, 4);
@@ -146,6 +145,8 @@ MidiWorkspace::MidiWorkspace()
     mf->setTicksPerQuarterNote(480);
 
     m_midi.reset(mf);
+
+    m_cache = std::vector<int>(2, 0);
 }
 
 MidiWorkspace::MidiWorkspace(const std::string& path)
@@ -153,6 +154,8 @@ MidiWorkspace::MidiWorkspace(const std::string& path)
     auto mf = new smf::MidiFile;
     mf->read(path);
     m_midi.reset(mf);
+
+    m_cache = std::vector<int>(static_cast<size_t>(m_midi->getTrackCount()), 0);
 }
 
 MidiWorkspace::MidiWorkspace(const QString& path)
@@ -179,6 +182,82 @@ MidiWorkspace::events_abs_tick_mut(unsigned int track) const
     if (track >= static_cast<unsigned int>(m_midi->getTrackCount()))
         throw std::out_of_range("track index out of range");
     return (*m_midi)[static_cast<int>(track)];
+}
+
+void
+MidiWorkspace::append_event(unsigned int track, uint64_t abs_tick, smf::MidiMessage msg)
+{
+    auto& events = events_abs_tick_mut(track);
+    const auto events_len = events.getEventCount();
+    smf::MidiEvent ev;
+    ev = msg;
+    ev.tick = static_cast<int>(abs_tick);
+    if (events_len == 0) {
+        events.append(ev);
+    } else if (ev.tick < events.getEvent(m_cache.at(track)).tick)
+    {
+        auto i = m_cache.at(track)-1;
+        for (; i>0; i--) {
+            // if two events have the same timestamp,
+            // note_off must come before note_on.
+            if (static_cast<uint64_t>(events.getEvent(i-1).tick) <= abs_tick)
+                break;
+        }
+        events.insert(i, ev);
+        m_cache.at(track)++;
+    }
+    else
+    {
+        auto i = m_cache.at(track);
+        for (; i<events_len; i++) {
+            // if two events have the same timestamp,
+            // note_off must come before note_on.
+            if (static_cast<uint64_t>(events.getEvent(i).tick) > abs_tick)
+                break;
+        }
+        events.insert(i, ev);
+    }
+}
+
+bool
+MidiWorkspace::delete_event(unsigned int track, uint64_t abs_tick, const smf::MidiMessage& msg)
+{
+    return delete_event_if_once(track, abs_tick, [&msg](auto& m){ return m == msg; });
+}
+
+bool
+MidiWorkspace::delete_event_if_once(unsigned int track, uint64_t abs_tick, std::function<bool(const smf::MidiMessage&)> pred)
+{
+    auto& events = events_abs_tick_mut(track);
+    if (abs_tick <= static_cast<uint64_t>(events.getEvent(m_cache.at(track)).tick))
+    {
+        auto i = m_cache.at(track);
+        for(; i>=0; i--)
+        {
+            const auto& event = events.getEvent(i);
+            if (static_cast<uint64_t>(event.tick) == abs_tick
+                    && pred(event))
+            {
+                m_cache.at(track) = std::max(0, m_cache.at(track));
+                return events.remove(i) != -1;
+            }
+        }
+    }
+    else
+    {
+        auto i = m_cache.at(track);
+        auto events_len = events.getEventCount();
+        for (; i<events_len; i++)
+        {
+            const auto& event = events.getEvent(i);
+            if (static_cast<uint64_t>(event.tick) == abs_tick
+                    && pred(event))
+            {
+                return events.remove(i) != -1;
+            }
+        }
+    }
+    return false;
 }
 
 TempoInfo
@@ -234,6 +313,15 @@ MidiWorkspace::track_info() const
         tracks.push_back(std::make_tuple(i, (boost::format("Track %1%") % i).str()));
     }
     return tracks;
+}
+
+void
+MidiWorkspace::reset_cache()
+{
+    for (auto& c : m_cache)
+    {
+        c = 0;
+    }
 }
 
 }

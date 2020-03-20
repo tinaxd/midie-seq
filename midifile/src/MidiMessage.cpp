@@ -89,7 +89,7 @@ MidiMessage& MidiMessage::operator=(const MidiMessage& message) {
 	if (this == &message) {
 		return *this;
 	}
-	(*this) = message;
+    (*this) = std::vector<uchar>(message);
 	return *this;
 }
 

@@ -88,6 +88,10 @@ public:
     const smf::MidiEventList& events_abs_tick(unsigned int track) const;
     smf::MidiEventList& events_abs_tick_mut(unsigned int track) const;
 
+    void append_event(unsigned int track, uint64_t abs_tick, smf::MidiMessage msg);
+    bool delete_event(unsigned int track, uint64_t abs_tick, const smf::MidiMessage& msg);
+    bool delete_event_if_once(unsigned int track, uint64_t abs_tick, std::function<bool(const smf::MidiMessage&)> pred);
+
     TempoInfo create_tempo_info(unsigned int track) const;
     TimeSignatureInfo create_time_signature_info(unsigned int track) const;
 
@@ -97,6 +101,9 @@ public:
 
 private:
     std::unique_ptr<smf::MidiFile> m_midi;
+
+    std::vector<int> m_cache;
+    void reset_cache();
 
     void finalize();
 };

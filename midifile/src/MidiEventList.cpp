@@ -96,7 +96,11 @@ int MidiEventList::remove(int index) {
 //      If the index is valid then the new size of the list is returned.
 //
 int MidiEventList::insert(int index, MidiEvent& event) {
-  if ( ( index >=0 ) && ( index < (int)list.size() ) ) {
+  if (index == (int)list.size()) {
+    MidiEvent *ptr = new MidiEvent(event);
+    list.push_back(ptr);
+    return (int)list.size()-1;
+  } else if ( ( index >=0 ) && ( index < (int)list.size() ) ) {
    MidiEvent* ptr = new MidiEvent(event);
    list.insert(list.begin()+index, ptr);
    return (int)list.size()-1;

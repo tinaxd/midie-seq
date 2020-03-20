@@ -9,6 +9,7 @@
 #include <MidiEventList.h>
 #include <memory>
 #include <array>
+#include <variant>
 
 
 namespace midie {
@@ -21,6 +22,7 @@ class MidiWorkspace;
 struct PianoRollConfig;
 struct PianoRollViewport;
 class PianoRollScroll;
+struct EditingState;
 class PianoRollWidget;
 
 
@@ -74,6 +76,27 @@ protected:
 };
 
 
+struct EditingState
+{
+    struct Clicked
+    {
+        Clicked(double x, double y) : x(x), y(y) {}
+        double x, y;
+    };
+
+    struct SubClicked
+    {
+        SubClicked(double x, double y) : x(x), y(y) {}
+        double x, y;
+    };
+
+    using Released = std::monostate;
+    using ClickState = std::variant<Released, Clicked, SubClicked>;
+    uint64_t quantize_unit = 480 / 4;
+    ClickState click_state = Released{};
+};
+
+
 class PianoRollWidget : public QWidget
 {
     Q_OBJECT
@@ -87,6 +110,7 @@ private:
 //    PianoRollViewport m_viewport;
     std::array<PianoRollPoint, 128> m_noteHeightCache;
 
+    EditingState m_editingState;
     std::shared_ptr<MidiWorkspace> m_ws;
 
     void paintAll(QPainter& painter, const PianoRollViewport& viewport);
@@ -96,6 +120,15 @@ private:
 
     PianoRollPoint calculateNoteVCord(uint8_t note) const;
     PianoRollPoint calculateNoteHCord(uint64_t abs_tick) const;
+
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+
+    bool deleteNoteTickNote(uint64_t tick, uint8_t note);
+
+    uint64_t quantizeTime(uint64_t absTick);
+
+    std::optional<std::tuple<uint64_t, uint8_t>> parseClickPosition(const std::tuple<PianoRollPoint, PianoRollPoint>& pos) const;
 
 //    void onResize(QResizeEvent *event);
 

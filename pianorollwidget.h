@@ -137,7 +137,7 @@ private:
 signals:
 
 public slots:
-    void replaceWorkspace(std::shared_ptr<MidiWorkspace> new_ws);
+    void replaceWorkspace(std::shared_ptr<MidiWorkspace> ws);
     void changeCurrentTrack(unsigned int track);
 
 };

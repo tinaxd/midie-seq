@@ -32,6 +32,10 @@ add_executable(midie
   midiutil.h
   trackchooser.cpp
   trackchooser.h
+  eventlist.cpp
+  eventlist.h
+  sequencer.cpp
+  sequencer.h
 )
 
 add_dependencies(midie midifile)

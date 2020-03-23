@@ -16,8 +16,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(this, &MainWindow::notifyNewSmf, ui->scrollAreaWidgetContents, &midie::PianoRollWidget::replaceWorkspace);
     connect(this, &MainWindow::notifyNewSmf, ui->trackComboBox, &midie::TrackChooser::replaceWorkspace);
+    connect(this, &MainWindow::notifyNewSmf, ui->treeView, &midie::EventList::replaceWorkspace);
 
     connect(ui->trackComboBox, &midie::TrackChooser::trackChange, ui->scrollAreaWidgetContents, &midie::PianoRollWidget::changeCurrentTrack);
+    connect(ui->trackComboBox, &midie::TrackChooser::trackChange, ui->treeView, &midie::EventList::changeTrack);
 }
 
 MainWindow::~MainWindow()

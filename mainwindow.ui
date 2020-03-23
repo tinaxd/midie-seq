@@ -20,7 +20,7 @@
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
-      <widget class="QListView" name="listView"/>
+      <widget class="midie::EventList" name="treeView"/>
       <widget class="midie::PianoRollScroll" name="scrollArea">
        <property name="widgetResizable">
         <bool>true</bool>
@@ -107,6 +107,11 @@
    <class>midie::TrackChooser</class>
    <extends>QComboBox</extends>
    <header>trackchooser.h</header>
+  </customwidget>
+  <customwidget>
+   <class>midie::EventList</class>
+   <extends>QTreeView</extends>
+   <header>eventlist.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
